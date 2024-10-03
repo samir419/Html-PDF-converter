@@ -15,41 +15,85 @@
     <script src=
 "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js">
       </script>
+        <script src="https://smtpjs.com/v3/smtp.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 </head>
 
 <body>
     <div id ="panel">
         <h3>Using html2pdf to create a PDF using the content of the form</h3>
-        <form id="form">
-            <label for="name">Name:</label>
-            <input type="text" id="name" 
-                name="name"><br><br>
+       
+        <form id="emailForm">
+            <label for="">your email</label>
+            <input type="text" name="" id="email">
 
-            <label for="comment">Comment:</label>
-            <input type="text" id="comment" 
-                name="comment"><br><br>
-
-            <input type="button" 
-                value="Generate PDF" 
-                onclick="getContentInPDF()">
+            <label for="emails">Recipient Emails (comma separated):</label><br>
+            <input type="text" id="emails" placeholder="Enter email addresses" required><br><br>
+    
+            <label for="subject">Subject:</label><br>
+            <input type="text" id="subject" placeholder="Enter email subject" required><br><br>
+    
+            <label for="message">Message:</label><br>
+            <textarea id="message" placeholder="Enter your message" required></textarea><br><br>
+    
+            <button type="button" onclick="sendEmail()">Send Email</button>
         </form>
     </div>
 
     <script>
-        function getContentInPDF() {
-            // Access form elements
-            let name = document.getElementById('name').value;
-            let comment = document.getElementById('comment').value;
+       
+        function sendEmail() {
+            var emails = document.getElementById("emails").value;
+            var subject = document.getElementById("subject").value;
+            var message = document.getElementById("message").value;
+            var user_email = document.getElementById("email").value;
+            
+            // Split emails and trim whitespaces
+            var emailArray = emails.split(',').map(email => email.trim());
 
             // Create a single HTML element by adding form data
             let element = document.createElement('div');
             element.innerHTML = '<h1>Form Data</h1>' +
-                '<p>Name: ' + name + '</p>' +
-                '<p>Comment: ' + comment + '</p>';
+                '<p>Name: ' + subject + '</p>' +
+                '<p>Comment: ' + message + '</p>';
 
             // Create a new PDF using the form element
-            html2pdf().from(element).save();
+            
+
+            html2pdf()
+                    .from(element)
+                    .toPdf()
+                    .get('pdf')
+                    .then((pdf) => {
+                        // Get the PDF bytes as a Uint8Array
+                        const pdfBytes = pdf.output('arraybuffer');
+
+                        // Create a Blob from the Uint8Array
+                        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+
+                    });
+
+            emailArray.forEach(function (email,blob) {
+            
+                
+              
+                // Using SMTP.js to send email
+                Email.send({
+                    SecureToken: "your-secure-token", // Replace with your token from SMTP.js
+                    To: email,
+                    From: user_email, // Replace with your email
+                    Subject: subject,
+                    Body: message,
+                    attachment: [{filename:'attachment.pdf',content: blob}]
+                }).then(
+                    message => alert("Email sent successfully to " + email)
+                ).catch(
+                    error => alert("Failed to send email to " + email)
+                );
+              
+            });
         }
+
     </script>
 </body>
 
